@@ -5,7 +5,7 @@ public class RuntimeInfo {
 
     /**
      * Returns runtime information by looking up classes identifying non-Java JVM
-     * languages and appends their major/minor version patch.
+     * languages and appending a key with their name and their major.minor version, if available
      */
     public static String getRuntimeMetadata() {
         StringBuilder s = new StringBuilder();
@@ -35,61 +35,57 @@ public class RuntimeInfo {
     }
 
     public static String kotlinVersion() {
-        try {
-            //KotlinVersion.CURRENT.toString()
-            Class<?> clazz = Class.forName("kotlin.KotlinVersion");
-            Field field = clazz.getField("CURRENT");
-            String version = field.get(null).toString();
-            return stripPatchRevision(version);
-
-        } catch (Exception t) {
-            // ignore
-        }
-        return null;
+        //KotlinVersion.CURRENT.toString()
+        return stripPatchRevision(getStaticField("kotlin.KotlinVersion", "CURRENT"));
     }
 
     public static String scalaVersion() {
-        try {
-            // scala.util.Properties.versionNumberString()
-            Class<?> clazz = Class.forName("scala.util.Properties");
-            Method m = clazz.getMethod("versionNumberString");
-            String version = (String) m.invoke(null);
-            return stripPatchRevision(version);
-
-        } catch (Exception t) {
-            // ignore
-        }
-        return null;
+        // scala.util.Properties.versionNumberString()
+        return stripPatchRevision(callStaticMethod("scala.util.Properties", "versionNumberString"));
     }
 
     public static String clojureVersion() {
-        try {
-            // (clojure-version) which translates to
-            // clojure.core$clojure_version.invokeStatic()
-            Class<?> clazz = Class.forName("clojure.core$clojure_version");
-            Method m = clazz.getMethod("invokeStatic");
-            String version = (String) m.invoke(null);
-            return stripPatchRevision(version);
-
-        } catch (Exception t) {
-            // ignore
-        }
-        return null;
+        // (clojure-version) which translates to
+        // clojure.core$clojure_version.invokeStatic()
+        return stripPatchRevision(callStaticMethod("clojure.core$clojure_version", "invokeStatic"));
     }
 
     public static String groovyVersion() {
-        try {
-            // groovy.lang.GroovySystem.getVersion()
-            // There's also getShortVersion(), but only since Groovy 3.0.1
-            Class<?> clazz = Class.forName("groovy.lang.GroovySystem");
-            Method m = clazz.getMethod("getVersion");
-            String version = (String) m.invoke(null);
-            return stripPatchRevision(version);
+        // groovy.lang.GroovySystem.getVersion()
+        // There's also getShortVersion(), but only since Groovy 3.0.1
+        return stripPatchRevision(callStaticMethod("groovy.lang.GroovySystem", "getVersion"));
+    }
 
-        } catch (Exception t) {
-            // ignore
+    static private String getStaticField(String className, String fieldName) {
+        Class<?> clazz;
+        try {
+            clazz = Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            return null;
         }
-        return null;
+
+        try {
+            Field field = clazz.getField(fieldName);
+            return field.get(null).toString();
+        } catch (Exception e) {
+            return ""; // can't get version information
+        }
+    }
+
+    static private String callStaticMethod(String className, String methodName) {
+        Class<?> clazz;
+        try {
+            clazz = Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+
+        try {
+            Method m = clazz.getMethod(methodName);
+            return m.invoke(null).toString();
+        } catch (Exception e) {
+            return ""; // can't get version information
+        }
     }
 
     static String stripPatchRevision(String version) {
