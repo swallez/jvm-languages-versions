@@ -5,7 +5,7 @@ public class RuntimeInfoTest extends Assert {
 
     @Test
     public void testRuntimeInfo() {
-        assertEquals(",kt=1.4,sc=2.13,clj=3.0,gy=3.0", RuntimeInfo.getRuntimeMetadata());
+        assertEquals(",kt=1.4,sc=2.13,clj=1.10,gy=3.0", RuntimeInfo.getRuntimeMetadata());
     }
 
     @Test
