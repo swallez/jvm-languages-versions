@@ -1,3 +1,3 @@
 
-rootProject.name = "jvm-languages-test"
+rootProject.name = "jvm-languages-versions"
 
